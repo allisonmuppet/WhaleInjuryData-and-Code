@@ -1,12 +1,11 @@
 # Model to predict outcomes for Right and Humpback Whale injuries based on known-outcome cases.
 # Data for NEFSC Right Whales
-# Script updated 12/31/2021, using Allison Henry's file dated 7/12/2020
-# and loads package 'WhaleInjuryCovariates'
-# and using Eric Archer's new GitHub version of rfPermute ()
-# Added variable 'mother' 10/16/2020
-# Separate covariate suites are used for entanglement and vessel strike models.
+# Script updated 04/28/2022
 
-# make sure you have devtools installed
+# The input files include a field called "PBR..Value", which is a misnomer for "MSI" (Mortality + Serious Injury)
+# values. I've updated the manuscript and the code here to output "MSI" in place of "PBR" for tables and figures,
+# though the "PBR" field remains intact in input files as of 04/28/2022
+
 if (!require('devtools')) install.packages('devtools')
 
 # install from GitHub
@@ -31,6 +30,7 @@ library(grid)
  
  setwd("c:/carretta/noaa/net_mort/serious injury/Serious Injury Proration RF")
  filenames = dir(pattern="2020 Proration Recalculation -")
+ filenames = filenames[which(substr(filenames, 32, 35)%in%c("HUWH", "RIWH"))]
  sp.prefix = substr(filenames, 32, 35)
  
  for (s in 1:length(filenames)) {  
@@ -91,8 +91,8 @@ library(grid)
  entangle.covariates = which(names(data.model)%in%c("anchored", "calf.juv", "constricting", "decline", "extensive.severe", "fluke.peduncle", "gear.free", "head", "healing", "laceration.deep", 
                                                     "laceration.shallow", "pectoral", "swim.dive", "trailing", "wraps.multi", "wraps.no"))
  
- vessel.covariates = which(names(data.model)%in%c("calf.juv", "decline", "extensive.severe", "fluke.peduncle", "gear.free", "head", "healing", "laceration.deep", 
-                                                  "laceration.shallow", "pectoral", "swim.dive", "trailing", "VessSpd", "VessSz"))
+ vessel.covariates = which(names(data.model)%in%c("calf.juv", "decline", "extensive.severe", "fluke.peduncle", "head", "healing", "laceration.deep", 
+                                                  "laceration.shallow", "pectoral", "swim.dive", "VessSpd", "VessSz"))
  
 
 # parse data into entanglement and vessel models
@@ -219,10 +219,10 @@ library(grid)
  
  sink()   }
  
-############## Plot Known + Unknown Outcome Entanglement PBR categories vs RF predictions 
+############## Plot Known + Unknown Outcome Entanglement MSI categories vs RF predictions 
 ############## of Death.Decline for Right + Humpback whales combined
  
- jpeg(file="RF Predictions vs PBR Assignments Entangle Allspp.jpg", width=2400, height=1200, units="px", res=300)
+# jpeg(file="RF Predictions vs MSI Assignments Entangle Allspp.jpg", width=2400, height=1200, units="px", res=300)
  
  
 ### function for use in ggplot to label means and sample sizes
@@ -247,16 +247,16 @@ library(grid)
      geom_violin(fill="gray") +
       geom_sina()+
        ggtitle("(A) Entanglement: Known Outcomes") +
-       labs (y= "RF Probability Dead.Decline", x = "PBR Value Assigned")
+       labs (y= "RF Probability Dead.Decline", x = "MSI Value Assigned")
   
    p2 <- ggplot(Allspp.unk.entangle, aes(PBR..Value, DEAD.DECLINE)) +
       geom_hline(yintercept = 0.50, color="gray") +
        geom_violin(fill="gray") +
         geom_sina()+
          ggtitle("(B) Entanglement: Unknown Outcomes") +
-          labs (y= "RF Probability Dead.Decline", x = "PBR Value Assigned")
+          labs (y= "RF Probability Dead.Decline", x = "MSI Value Assigned")
    
-   jpeg(file="RF Predictions vs PBR Assignments Entanglement Allspp.jpg", width=2400, height=1200, units="px", res=300)
+   jpeg(file="RF Predictions vs MSI Assignments Entanglement Allspp.jpg", width=2400, height=1200, units="px", res=300)
    
    grid.arrange(p1, p2, ncol=2, nrow=1)
    
@@ -281,7 +281,7 @@ library(grid)
      geom_violin(fill="gray") +
       geom_sina()+
     ggtitle("(A) Vessel Strike: Known Outcomes") +
-    labs (y= "RF Probability Dead.Decline", x = "PBR Value Assigned")
+    labs (y= "RF Probability Dead.Decline", x = "MSI Value Assigned")
   
   p4 <-ggplot(Allspp.unk.vessel, aes(PBR..Value, DEAD.DECLINE)) +
     geom_hline(yintercept = 0.50, color="gray") +
@@ -289,9 +289,9 @@ library(grid)
       geom_sina()+
      ylim(0,1) +
     ggtitle("(B) Vessel Strike: Unknown Outcomes") +
-    labs (y= "RF Probability Dead.Decline", x = "PBR Value Assigned")
+    labs (y= "RF Probability Dead.Decline", x = "MSI Value Assigned")
   
-  jpeg(file="RF Predictions vs PBR Assignments Vessel Allspp.jpg", width=2400, height=1200, units="px", res=300)
+  jpeg(file="RF Predictions vs MSI Assignments Vessel Allspp.jpg", width=2400, height=1200, units="px", res=300)
   
   grid.arrange(p3, p4, ncol=2, nrow=1)
   
@@ -302,7 +302,7 @@ library(grid)
       onePBR.EN.known <- Allspp.known.entangle[Allspp.known.entangle$PBR..Value==1,]
       quantile(onePBR.EN.known$DEAD.DECLINE, c(0.025, 0.5, 0.975))
   
- ### Fraction of unknown entanglement and vessel strike outcomes assigned PBR = 0 with RF probability of DEAD.DECLINE > 0.5
+ ### Fraction of unknown entanglement and vessel strike outcomes assigned MSI = 0 with RF probability of DEAD.DECLINE > 0.5
      zeroPBR.EN <- Allspp.unk.entangle[Allspp.unk.entangle$PBR..Value==0,]
      Fr.Gr50.EN <- sum(zeroPBR.EN$DEAD.DECLINE > 0.5) / nrow(zeroPBR.EN)
      signif(Fr.Gr50.EN, 2)
@@ -317,7 +317,7 @@ library(grid)
      nrow(zeroPBR.VS)
      quantile(zeroPBR.VS$DEAD.DECLINE, c(0.025, 0.5, 0.975))
      
- ### Fraction of unknown entanglement and vessel strike outcomes assigned PBR = 1 with RF probability of DEAD.DECLINE <= 0.5
+ ### Fraction of unknown entanglement and vessel strike outcomes assigned MSI = 1 with RF probability of DEAD.DECLINE <= 0.5
      onePBR.EN <- Allspp.unk.entangle[Allspp.unk.entangle$PBR..Value==1,]
      Fr.LessEqual.50.EN <- sum(onePBR.EN$DEAD.DECLINE <= 0.5) / nrow(onePBR.EN)
      signif(Fr.LessEqual.50.EN, 3)
@@ -329,7 +329,7 @@ library(grid)
      nrow(onePBR.VS)
      quantile(onePBR.VS$DEAD.DECLINE, c(0.025, 0.5, 0.975))
      
-# Fraction of unknown entanglements assigned PBR = 0.75
+# Fraction of unknown entanglements assigned MSI = 0.75
      
      three.qtrs.EN <- Allspp.unk.entangle[Allspp.unk.entangle$PBR..Value==0.75,]
      Fr.LessEqual.50.EN <- sum(three.qtrs.EN$DEAD.DECLINE <= 0.5) / nrow(three.qtrs.EN)
@@ -349,7 +349,7 @@ library(grid)
                                  sum(Allspp.known.entangle$DEAD.DECLINE)
                         )
  
- names(table.L1) <- c("Injury Type", "PBR=0", "RFprob>0.5", "PBR=0.75", "RFprob<=0.5", "PBR=1", "RFprob<=0.5", "Sum PBR", "Sum RF Majority DEAD.DECLINE", "Sum RF Prob DEAD.DECLINE")
+ names(table.L1) <- c("Injury Type", "MSI=0", "RFprob>0.5", "MSI=0.75", "RFprob<=0.5", "MSI=1", "RFprob<=0.5", "Sum MSI", "Sum RF Majority DEAD.DECLINE", "Sum RF Prob DEAD.DECLINE")
  
   
  table.L2 <- cbind.data.frame("Entangle Unknown",
@@ -385,7 +385,7 @@ library(grid)
                               sum(Allspp.unk.vessel$Predicted=="DEAD.DECLINE"),
                               sum(Allspp.unk.vessel$DEAD.DECLINE))
  
- names.Comps.Table <- c("Injury Type", "PBR=0", "RFprob>0.5", "PBR=0.75", "RFprob<=0.5", "PBR=1", "RFprob<=0.5", "Sum PBR", "Sum RF Majority DEAD.DECLINE", "Sum RF Prob DEAD.DECLINE")
+ names.Comps.Table <- c("Injury Type", "MSI=0", "RFprob>0.5", "MSI=0.75", "RFprob<=0.5", "MSI=1", "RFprob<=0.5", "Sum MSI", "Sum RF Majority DEAD.DECLINE", "Sum RF Prob DEAD.DECLINE")
  names(table.L1) <- names.Comps.Table
  names(table.L2) <- names.Comps.Table
  names(table.L3) <- names.Comps.Table
@@ -393,23 +393,23 @@ library(grid)
  
  Comps.Table <- rbind.data.frame(table.L1, table.L2, table.L3, table.L4)
  
- write.csv(Comps.Table, "Table Compare RF vs PBR assignments.csv", row.names=FALSE)
+ write.csv(Comps.Table, "Table Compare RF vs MSI assignments.csv", row.names=FALSE)
 
- # Vessel Strike Unknown Outcome prorated PBR totals
+ # Vessel Strike Unknown Outcome prorated MSI totals
  # include these proration factors
   prorated.VS.PBR <- c(0.14, 0.20, 0.36, 0.52, 0.56)
  # Number cases
   sum(Allspp.unk.vessel$PBR..Value %in% prorated.VS.PBR)
  # Indices of cases
    prorated.VS.PBR.ind <- which(Allspp.unk.vessel$PBR..Value %in% prorated.VS.PBR)
- # sum of PBR assignments
+ # sum of MSI assignments
     sum(as.numeric(as.character(Allspp.unk.vessel$PBR..Value[prorated.VS.PBR.ind])))
  # sum of RF majority predictions
     table(Allspp.unk.vessel$Predicted[prorated.VS.PBR.ind])
   
   closeAllConnections()
   
-  dev.off()
+  #dev.off()
   
   source("Plots Publication.R")
   
